@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fresh Fox Slot Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body {
+  background:#000;
+  color:#fff;
+  font-family:system-ui,sans-serif;
+  margin:0;
+  padding:0;
+}
+.slot-wrapper {
+  max-width:900px;
+  margin:20px auto;
+  background:#111;
+  border-radius:14px;
+  border:1px solid #333;
+  padding:20px;
+  box-shadow:0 0 20px #000;
+}
+h1 {
+  text-align:center;
+}
+#userDisplay {
+  text-align:center;
+  margin-bottom:10px;
+  font-size:1.2rem;
+}
+.reels {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  background:#222;
+  padding:20px;
+  border-radius:12px;
+  border:2px solid #444;
+}
+.reel {
+  background:#000;
+  border:1px solid #333;
+  border-radius:10px;
+}
+.symbol {
+  height:130px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+.symbol img {
+  max-width:100%;
+  max-height:100%;
+}
+button {
+  background:#f59e0b;
+  border:none;
+  padding:12px 25px;
+  border-radius:30px;
+  font-weight:bold;
+  margin:4px;
+  cursor:pointer;
+}
+button:active {
+  transform:scale(0.97);
+}
+.controls {
+  text-align:center;
+  margin-top:10px;
+}
+input {
+  padding:7px;
+  border-radius:6px;
+  width:90px;
+  border:none;
+  text-align:center;
+}
+.highlight {
+  animation:flash .6s ease-in-out 2;
+}
+@keyframes flash {
+  0%,100% { filter:brightness(1);}
+  50% { filter:brightness(2);}
+}
+</style>
+
+<script>
+/* USER ACCOUNT */
+let user=null;
+let balance=0;
+
+function loginPrompt(){
+  const username=prompt("Enter username:");
+  if(!username)return;
+
+  const stored=localStorage.getItem("user_"+username);
+  if(stored){
+    user=JSON.parse(stored);
+    balance=user.points;
+  } else {
+    alert("No account found. Please sign up on the homepage.");
+    window.location.href="index.html";
+    return;
+  }
+  updateUserDisplay();
+  updateBalance();
+}
+function saveUser(){
+  if(!user)return;
+  user.points=balance;
+  localStorage.setItem("user_"+user.username,JSON.stringify(user));
+}
+function updateUserDisplay(){
+  document.getElementById("userDisplay").textContent =
+    user ? "Logged in as: "+user.username : "Not logged in";
+}
+function updateBalance(){
+  document.getElementById("balanceDisplay").textContent=balance;
+}
+
+/* SYMBOLS */
+const SYM={
+  MAN:"man_shoe",
+  BAG:"bag",
+  LEATHER:"leather_shoes",
+  BASK:"basketball_shoes",
+  FOXW:"fox_white",
+  FOXB:"fox_black",
+  FOXG:"fox_gold",
+  M3:"mult_3",
+  M5:"mult_5"
+};
+
+const IMG={
+  man_shoe:"img/man_shoe.png",
+  bag:"img/bag.png",
+  leather_shoes:"img/leather_shoes.png",
+  basketball_shoes:"img/basketball_shoes.png",
+  fox_white:"img/fox_white.png",
+  fox_black:"img/fox_black.png",
+  fox_gold:"img/fox_gold.png",
+  mult_3:"img/mult_3.png",
+  mult_5:"img/mult_5.png"
+};
+
+/* PAYOUTS */
+const PAY={
+  [SYM.MAN]:1,
+  [SYM.BAG]:2,
+  [SYM.LEATHER]:3,
+  [SYM.BASK]:3,
+  [SYM.FOXW]:5,
+  [SYM.FOXB]:8,
+  [SYM.FOXG]:10
+};
+const MULT={
+  [SYM.M3]:3,
+  [SYM.M5]:5
+};
+
+/* REELS */
+const REELS=[
+  [
+    SYM.MAN, SYM.MAN, SYM.BAG, SYM.LEATHER,
+    SYM.MAN, SYM.FOXW, SYM.MAN, SYM.BASK,
+    SYM.MAN, SYM.FOXB, SYM.MAN, SYM.LEATHER,
+    SYM.MAN, SYM.BAG, SYM.M3, SYM.FOXG
+  ],
+  [
+    SYM.MAN, SYM.BAG, SYM.MAN, SYM.LEATHER,
+    SYM.MAN, SYM.FOXW, SYM.BASK, SYM.MAN,
+    SYM.BAG, SYM.MAN, SYM.FOXB, SYM.MAN,
+    SYM.LEATHER, SYM.MAN, SYM.M3, SYM.MAN,
+    SYM.FOXG, SYM.M5
+  ],
+  [
+    SYM.MAN, SYM.MAN, SYM.BAG, SYM.LEATHER,
+    SYM.MAN, SYM.FOXW, SYM.MAN, SYM.BASK,
+    SYM.BAG, SYM.MAN, SYM.FOXB, SYM.MAN,
+    SYM.LEATHER, SYM.MAN, SYM.BASK, SYM.MAN,
+    SYM.M3, SYM.MAN, SYM.FOXG, SYM.M5
+  ]
+];
+
+/* PAYLINES */
+const LINES=[
+  [[0,0],[0,1],[0,2]],
+  [[1,0],[1,1],[1,2]],
+  [[2,0],[2,1],[2,2]],
+  [[0,0],[1,1],[2,2]],
+  [[2,0],[1,1],[0,2]],
+  [[0,0],[1,0],[2,1]],
+  [[2,0],[1,0],[0,1]],
+  [[0,1],[1,2],[2,2]],
+  [[2,1],[1,2],[0,2]]
+];
+
+/* DRAW REELS */
+function drawEmpty(){
+  const r=document.getElementById("reels");
+  r.innerHTML="";
+  for(let c=0;c<3;c++){
+    const col=document.createElement("div");
+    col.className="reel";
+    for(let r2=0;r2<3;r2++){
+      col.innerHTML+=`<div class="symbol"></div>`;
+    }
+    r.appendChild(col);
+  }
+}
+function renderGrid(grid){
+  const cols=document.querySelectorAll(".reel");
+  for(let c=0;c<3;c++){
+    for(let r=0;r<3;r++){
+      cols[c].children[r].innerHTML=`<img src="${IMG[grid[r][c]]}">`;
+      cols[c].children[r].classList.remove("highlight");
+    }
+  }
+}
+
+/* SPIN */
+function spinReels(){
+  const grid=[[],[],[]];
+  for(let c=0;c<3;c++){
+    const strip=REELS[c];
+    const idx=Math.floor(Math.random()*strip.length);
+    for(let r=0;r<3;r++){
+      grid[r][c]=strip[(idx+r)%strip.length];
+    }
+  }
+  return grid;
+}
+
+/* SCORING */
+function evalLine(symbols,bet){
+  const[a,b,c]=symbols;
+  const isMult = x => x===SYM.M3 || x===SYM.M5;
+
+  if(a===b && b===c && isMult(a)){
+    return a===SYM.M3 ? bet*10 : bet*25;
+  }
+  if(a===b && b===c && PAY[a]){
+    return bet*PAY[a];
+  }
+
+  const count={};
+  [a,b,c].forEach(s=>count[s]=(count[s]||0)+1);
+  let reg=null;
+  for(let s in count){
+    if(count[s]===2 && PAY[s]) reg=s;
+  }
+  if(reg){
+    let mult=1;
+    [a,b,c].forEach(s=>{
+      if(s===SYM.M3)mult*=3;
+      if(s===SYM.M5)mult*=5;
+    });
+    return bet*PAY[reg]*mult;
+  }
+  return 0;
+}
+
+function scoreGrid(grid,bet){
+  let win=0;
+  let msgs=[];
+  LINES.forEach((line,i)=>{
+    const symbols=line.map(p=>grid[p[0]][p[1]]);
+    const amt=evalLine(symbols,bet);
+    if(amt>0){
+      win+=amt;
+      msgs.push(`Line ${i+1}: +${amt}`);
+      highlight(line);
+    }
+  });
+  return{win,msgs};
+}
+
+function highlight(line){
+  const reels=document.querySelectorAll(".reel");
+  line.forEach(([r,c])=>{
+    reels[c].children[r].classList.add("highlight");
+  });
+}
+
+/* SPIN BUTTON */
+function spin(){
+  if(!user){ loginPrompt(); if(!user)return; }
+  const bet=parseInt(document.getElementById("betInput").value);
+  if(bet>balance){ alert("Not enough coins."); return; }
+
+  balance-=bet;
+  const grid=spinReels();
+  renderGrid(grid);
+
+  const{win,msgs}=scoreGrid(grid,bet);
+  balance+=win;
+
+  updateBalance();
+  saveUser();
+  document.getElementById("lastWin").textContent=win;
+  document.getElementById("message").textContent =
+    msgs.length ? msgs.join(" • ") : "No win";
+}
+
+/* REDEEM */
+const REWARDS=[
+  {name:"Sticker Pack",cost:2000},
+  {name:"T-Shirt",cost:5000},
+  {name:"Gift Card",cost:10000},
+  {name:"Exclusive Hoodie",cost:50000},
+  {name:"High-End Gadget",cost:250000},
+  {name:"Mega Prize",cost:1000000}
+];
+
+function redeemMenu(){
+  if(!user){ loginPrompt(); return; }
+
+  let menu="Redeem Reward:\n\n";
+  REWARDS.forEach((r,i)=>menu+=`${i+1}. ${r.name} — ${r.cost}\n`);
+  const choice=prompt(menu);
+  if(!choice)return;
+
+  const item=REWARDS[parseInt(choice)-1];
+  if(!item)return;
+
+  if(balance<item.cost){
+    alert("Not enough coins.");
+    return;
+  }
+
+  balance-=item.cost;
+  saveUser();
+  updateBalance();
+  alert("You redeemed: "+item.name);
+}
+
+/* PURCHASE */
+function purchaseMenu(){
+  if(!user){ loginPrompt(); return; }
+
+  let amt=prompt("Buy chips:\n$10 = 100 coins\nEnter amount (100, 200, 300...):");
+  if(!amt)return;
+  amt=parseInt(amt);
+
+  if(isNaN(amt)||amt<100||amt%100!==0){
+    alert("Invalid amount");
+    return;
+  }
+
+  const price=(amt/100)*10;
+  if(!confirm(`Buy ${amt} coins for $${price}?`))return;
+
+  balance+=amt;
+  saveUser();
+  updateBalance();
+  alert("Purchase successful (demo mode).");
+}
+
+/* INIT */
+window.onload=()=>{
+  drawEmpty();
+  updateUserDisplay();
+  updateBalance();
+};
+</script>
+
+</head>
+<body>
+
+<div class="slot-wrapper">
+
+<h1>Fresh Fox Slots</h1>
+<div id="userDisplay">Not logged in</div>
+
+<div style="text-align:center;">
+  Balance: <span id="balanceDisplay">0</span>  
+  • Last Win: <span id="lastWin">0</span>
+</div>
+
+<div class="reels" id="reels"></div>
+
+<div class="controls">
+  <input id="betInput" type="number" value="10" min="1">
+  <button onclick="spin()">SPIN</button>
+  <button onclick="redeemMenu()">Redeem</button>
+  <button onclick="purchaseMenu()">Buy Chips</button>
+  <button onclick="loginPrompt()">Login</button>
+  <button onclick="window.location.href='index.html'">Home</button>
+</div>
+
+<p id="message" style="text-align:center; margin-top:10px;"></p>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fresh Fox — Shoe Care Elevated</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body {
+  background: #000;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+.header {
+  text-align: center;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b, #b45309);
+  color: #111;
+}
+.header h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+  font-weight: 800;
+}
+.header h2 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+.content {
+  padding: 40px 20px;
+  max-width: 900px;
+  margin: auto;
+  text-align: center;
+  line-height: 1.7;
+}
+.signup-box {
+  background: #111;
+  padding: 25px;
+  border-radius: 12px;
+  border: 2px solid #f59e0b;
+  max-width: 400px;
+  margin: 30px auto;
+}
+input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  margin-bottom: 15px;
+}
+button {
+  width: 100%;
+  background: #f59e0b;
+  border: none;
+  padding: 12px;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+button:active {
+  transform: scale(0.97);
+}
+.footer {
+  text-align: center;
+  padding: 30px;
+  color: #aaa;
+  font-size: 0.9rem;
+}
+</style>
+
+<script>
+function registerUser() {
+  const username = document.getElementById("regUser").value.trim();
+  if (!username) {
+    alert("Please enter a username.");
+    return;
+  }
+
+  const exists = localStorage.getItem("user_" + username);
+
+  if (exists) {
+    alert("Account already exists — please log in on the slot page.");
+    return;
+  }
+
+  // Create new user with 100 free coins
+  const newUser = {
+    username,
+    points: 100
+  };
+
+  localStorage.setItem("user_" + username, JSON.stringify(newUser));
+
+  alert("Account created! You now have 100 free slot coins.\nYou can now play the slot game.");
+
+  // redirect to slot game
+  window.location.href = "slot.html";
+}
+</script>
+
+</head>
+
+<body>
+
+<div class="header">
+  <h1>Fresh Fox</h1>
+  <h2>Shoe Care Elevated</h2>
+</div>
+
+<div class="content">
+  <p style="font-size:1.2rem; margin-bottom:20px;">
+    <b>Coming 2026:</b> The only shoe-care product you will ever need to lift your style to new heights.
+  </p>
+
+  <p>
+    We are preparing the official launch of <b>Fresh Fox</b> — a premium shoe-care innovation designed to
+    elevate your style effortlessly.  
+  </p>
+
+  <p style="margin:20px 0;">
+    <b>Sign up today</b> to enjoy <b>100 free slot playing coins!</b><br>
+    Play, earn, and redeem coins while we prepare Fresh Fox for launch.<br><br>
+    Keep checking in for updated launch dates and ongoing promotions.
+  </p>
+
+  <!-- SIGN UP SECTION -->
+  <div class="signup-box">
+    <h3>Create Your Account</h3>
+    <input id="regUser" type="text" placeholder="Enter username">
+    <button onclick="registerUser()">Sign Up & Get 100 Free Coins</button>
+  </div>
+
+  <!-- PLAY SLOT BUTTON -->
+  <button onclick="window.location.href='slot.html'" style="margin-top:15px;">
+    Already Registered? Play the Slot Game
+  </button>
+
+</div>
+
+<div class="footer">
+  Fresh Fox © 2025 — All Rights Reserved
+</div>
+
+</body>
+</html>

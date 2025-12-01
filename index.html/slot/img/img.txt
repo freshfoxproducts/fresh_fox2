@@ -1,0 +1,15 @@
+project/
+│
+├── index.html
+├── slot.html
+│
+└── img/
+      man_shoe.png
+      bag.png
+      leather_shoes.png
+      basketball_shoes.png
+      fox_white.png
+      fox_black.png
+      fox_gold.png
+      mult_3.png
+      mult_5.png   ← SAVE IT HERE
