@@ -1,398 +1,499 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>Fresh Fox Slot Game</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <style>
-body {
-  background:#000;
-  color:#fff;
-  font-family:system-ui,sans-serif;
-  margin:0;
-  padding:0;
-}
-.slot-wrapper {
-  max-width:900px;
-  margin:20px auto;
-  background:#111;
-  border-radius:14px;
-  border:1px solid #333;
-  padding:20px;
-  box-shadow:0 0 20px #000;
-}
-h1 {
-  text-align:center;
-}
-#userDisplay {
-  text-align:center;
-  margin-bottom:10px;
-  font-size:1.2rem;
-}
-.reels {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  background:#222;
-  padding:20px;
-  border-radius:12px;
-  border:2px solid #444;
-}
-.reel {
-  background:#000;
-  border:1px solid #333;
-  border-radius:10px;
-}
-.symbol {
-  height:130px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-.symbol img {
-  max-width:100%;
-  max-height:100%;
-}
-button {
-  background:#f59e0b;
-  border:none;
-  padding:12px 25px;
-  border-radius:30px;
-  font-weight:bold;
-  margin:4px;
-  cursor:pointer;
-}
-button:active {
-  transform:scale(0.97);
-}
-.controls {
-  text-align:center;
-  margin-top:10px;
-}
-input {
-  padding:7px;
-  border-radius:6px;
-  width:90px;
-  border:none;
-  text-align:center;
-}
-.highlight {
-  animation:flash .6s ease-in-out 2;
-}
-@keyframes flash {
-  0%,100% { filter:brightness(1);}
-  50% { filter:brightness(2);}
-}
+  body {
+    background: #000;
+    color: #fff;
+    font-family: system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  .slot-wrapper {
+    max-width: 900px;
+    margin: 20px auto;
+    background: #111;
+    border-radius: 14px;
+    border: 1px solid #333;
+    padding: 20px;
+    box-shadow: 0 0 20px #000;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  #userDisplay {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+  }
+  .info-row {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .reels {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    background: #222;
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px solid #444;
+  }
+  .reel {
+    background: #000;
+    border: 1px solid #333;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .symbol {
+    height: 130px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .symbol img {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .controls {
+    text-align: center;
+    margin-top: 14px;
+  }
+  button {
+    background: #f59e0b;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin: 4px;
+  }
+  button:active {
+    transform: scale(0.97);
+  }
+  input[type="number"] {
+    padding: 7px;
+    border-radius: 6px;
+    border: none;
+    text-align: center;
+    width: 80px;
+    margin-right: 6px;
+  }
+  input[type="email"],
+  input[type="password"] {
+    padding: 7px;
+    border-radius: 6px;
+    border: none;
+    margin: 2px;
+    width: 180px;
+  }
+  .highlight {
+    animation: flash 0.6s ease-in-out 2;
+  }
+  @keyframes flash {
+    0%, 100% { filter: brightness(1); }
+    50%      { filter: brightness(2); }
+  }
+  #message {
+    text-align: center;
+    margin-top: 10px;
+    min-height: 18px;
+    font-size: 0.9rem;
+  }
+  .login-bar {
+    text-align: center;
+    margin-bottom: 10px;
+  }
 </style>
 
 <script>
-/* USER ACCOUNT */
-let user=null;
-let balance=0;
+  /* ---------------- USER / AUTH (EMAIL + PASSWORD) ---------------- */
 
-function loginPrompt(){
-  const username=prompt("Enter username:");
-  if(!username)return;
+  let currentUser = null;
+  let balance = 0;
 
-  const stored=localStorage.getItem("user_"+username);
-  if(stored){
-    user=JSON.parse(stored);
-    balance=user.points;
-  } else {
-    alert("No account found. Please sign up on the homepage.");
-    window.location.href="index.html";
-    return;
+  function getUserKey(email) {
+    return "user_" + email.toLowerCase();
   }
-  updateUserDisplay();
-  updateBalance();
-}
-function saveUser(){
-  if(!user)return;
-  user.points=balance;
-  localStorage.setItem("user_"+user.username,JSON.stringify(user));
-}
-function updateUserDisplay(){
-  document.getElementById("userDisplay").textContent =
-    user ? "Logged in as: "+user.username : "Not logged in";
-}
-function updateBalance(){
-  document.getElementById("balanceDisplay").textContent=balance;
-}
 
-/* SYMBOLS */
-const SYM={
-  MAN:"man_shoe",
-  BAG:"bag",
-  LEATHER:"leather_shoes",
-  BASK:"basketball_shoes",
-  FOXW:"fox_white",
-  FOXB:"fox_black",
-  FOXG:"fox_gold",
-  M3:"mult_3",
-  M5:"mult_5"
-};
+  function loginFromForm(event) {
+    event.preventDefault();
+    const emailEl = document.getElementById("loginEmail");
+    const passEl = document.getElementById("loginPass");
+    const email = (emailEl.value || "").trim().toLowerCase();
+    const pass = passEl.value || "";
 
-const IMG={
-  man_shoe:"img/man_shoe.png",
-  bag:"img/bag.png",
-  leather_shoes:"img/leather_shoes.png",
-  basketball_shoes:"img/basketball_shoes.png",
-  fox_white:"img/fox_white.png",
-  fox_black:"img/fox_black.png",
-  fox_gold:"img/fox_gold.png",
-  mult_3:"img/mult_3.png",
-  mult_5:"img/mult_5.png"
-};
-
-/* PAYOUTS */
-const PAY={
-  [SYM.MAN]:1,
-  [SYM.BAG]:2,
-  [SYM.LEATHER]:3,
-  [SYM.BASK]:3,
-  [SYM.FOXW]:5,
-  [SYM.FOXB]:8,
-  [SYM.FOXG]:10
-};
-const MULT={
-  [SYM.M3]:3,
-  [SYM.M5]:5
-};
-
-/* REELS */
-const REELS=[
-  [
-    SYM.MAN, SYM.MAN, SYM.BAG, SYM.LEATHER,
-    SYM.MAN, SYM.FOXW, SYM.MAN, SYM.BASK,
-    SYM.MAN, SYM.FOXB, SYM.MAN, SYM.LEATHER,
-    SYM.MAN, SYM.BAG, SYM.M3, SYM.FOXG
-  ],
-  [
-    SYM.MAN, SYM.BAG, SYM.MAN, SYM.LEATHER,
-    SYM.MAN, SYM.FOXW, SYM.BASK, SYM.MAN,
-    SYM.BAG, SYM.MAN, SYM.FOXB, SYM.MAN,
-    SYM.LEATHER, SYM.MAN, SYM.M3, SYM.MAN,
-    SYM.FOXG, SYM.M5
-  ],
-  [
-    SYM.MAN, SYM.MAN, SYM.BAG, SYM.LEATHER,
-    SYM.MAN, SYM.FOXW, SYM.MAN, SYM.BASK,
-    SYM.BAG, SYM.MAN, SYM.FOXB, SYM.MAN,
-    SYM.LEATHER, SYM.MAN, SYM.BASK, SYM.MAN,
-    SYM.M3, SYM.MAN, SYM.FOXG, SYM.M5
-  ]
-];
-
-/* PAYLINES */
-const LINES=[
-  [[0,0],[0,1],[0,2]],
-  [[1,0],[1,1],[1,2]],
-  [[2,0],[2,1],[2,2]],
-  [[0,0],[1,1],[2,2]],
-  [[2,0],[1,1],[0,2]],
-  [[0,0],[1,0],[2,1]],
-  [[2,0],[1,0],[0,1]],
-  [[0,1],[1,2],[2,2]],
-  [[2,1],[1,2],[0,2]]
-];
-
-/* DRAW REELS */
-function drawEmpty(){
-  const r=document.getElementById("reels");
-  r.innerHTML="";
-  for(let c=0;c<3;c++){
-    const col=document.createElement("div");
-    col.className="reel";
-    for(let r2=0;r2<3;r2++){
-      col.innerHTML+=`<div class="symbol"></div>`;
+    if (!email || !pass) {
+      alert("Enter email and password to log in.");
+      return;
     }
-    r.appendChild(col);
+
+    const stored = localStorage.getItem(getUserKey(email));
+    if (!stored) {
+      alert("No account found with that email. Please sign up on the main page.");
+      return;
+    }
+
+    const user = JSON.parse(stored);
+    if (user.password !== pass) {
+      alert("Incorrect password.");
+      return;
+    }
+
+    currentUser = user;
+    balance = user.points || 0;
+    updateUserDisplay();
+    updateBalance();
+    document.getElementById("message").textContent = "Logged in. Good luck!";
   }
-}
-function renderGrid(grid){
-  const cols=document.querySelectorAll(".reel");
-  for(let c=0;c<3;c++){
-    for(let r=0;r<3;r++){
-      cols[c].children[r].innerHTML=`<img src="${IMG[grid[r][c]]}">`;
-      cols[c].children[r].classList.remove("highlight");
+
+  function saveUser() {
+    if (!currentUser) return;
+    currentUser.points = balance;
+    localStorage.setItem(getUserKey(currentUser.email), JSON.stringify(currentUser));
+  }
+
+  function updateUserDisplay() {
+    const el = document.getElementById("userDisplay");
+    if (!currentUser) {
+      el.textContent = "Not logged in";
+    } else {
+      el.textContent = "Logged in as: " + currentUser.email;
     }
   }
-}
 
-/* SPIN */
-function spinReels(){
-  const grid=[[],[],[]];
-  for(let c=0;c<3;c++){
-    const strip=REELS[c];
-    const idx=Math.floor(Math.random()*strip.length);
-    for(let r=0;r<3;r++){
-      grid[r][c]=strip[(idx+r)%strip.length];
+  function updateBalance() {
+    document.getElementById("balanceDisplay").textContent = balance;
+  }
+
+  function requireLogin() {
+    if (!currentUser) {
+      alert("You must be logged in to play. Use the email/password form above.");
+      return false;
+    }
+    return true;
+  }
+
+  /* ---------------- SYMBOLS + IMAGES ---------------- */
+
+  const SYM = {
+    MAN: "man_shoe",
+    BAG: "bag",
+    LEATHER: "leather_shoes",
+    BASK: "basketball_shoes",
+    FOXW: "fox_white",
+    FOXB: "fox_black",
+    FOXG: "fox_gold",
+    M3: "mult_3",
+    M5: "mult_5"
+  };
+
+  // UPDATE THESE PATHS ONLY IF YOU CHANGE FILENAMES
+  const IMG = {
+    [SYM.MAN]:    "img/man_shoe.png",
+    [SYM.BAG]:    "img/bag.png",
+    [SYM.LEATHER]:"img/leather_shoes.png",
+    [SYM.BASK]:   "img/basketball_shoes.png",
+    [SYM.FOXW]:   "img/fox_white.png",
+    [SYM.FOXB]:   "img/fox_black.png",
+    [SYM.FOXG]:   "img/fox_gold.png",
+    [SYM.M3]:     "img/mult_3.png",
+    [SYM.M5]:     "img/mult_5.png"
+  };
+
+  const PAY = {
+    [SYM.MAN]: 1,
+    [SYM.BAG]: 2,
+    [SYM.LEATHER]: 3,
+    [SYM.BASK]: 3,
+    [SYM.FOXW]: 5,
+    [SYM.FOXB]: 8,
+    [SYM.FOXG]: 12
+  };
+
+  // Multipliers only pay as 3-of-a-kind
+  const MULT_ONLY = {
+    [SYM.M3]: 10, // 10x bet for 3x3
+    [SYM.M5]: 25  // 25x bet for 3x5
+  };
+
+  /* ---------------- REELS (LOW WIN RATE – OPTION A) ----------------
+     Longer strips, many low symbols, few high ones, multipliers very rare.
+  */
+
+  const REELS = [
+    // REEL 1 (24 symbols)
+    [
+      SYM.MAN, SYM.MAN, SYM.MAN, SYM.BAG,
+      SYM.MAN, SYM.MAN, SYM.LEATHER, SYM.MAN,
+      SYM.MAN, SYM.BASK, SYM.MAN, SYM.MAN,
+      SYM.BAG, SYM.MAN, SYM.FOXW, SYM.MAN,
+      SYM.MAN, SYM.FOXB, SYM.MAN, SYM.M3,
+      SYM.MAN, SYM.MAN, SYM.FOXG, SYM.MAN
+    ],
+    // REEL 2 (24 symbols)
+    [
+      SYM.MAN, SYM.BAG, SYM.MAN, SYM.MAN,
+      SYM.LEATHER, SYM.MAN, SYM.MAN, SYM.BASK,
+      SYM.MAN, SYM.MAN, SYM.BAG, SYM.MAN,
+      SYM.MAN, SYM.FOXW, SYM.MAN, SYM.MAN,
+      SYM.FOXB, SYM.MAN, SYM.M3, SYM.MAN,
+      SYM.MAN, SYM.FOXG, SYM.MAN, SYM.M5
+    ],
+    // REEL 3 (24 symbols)
+    [
+      SYM.MAN, SYM.MAN, SYM.BAG, SYM.MAN,
+      SYM.MAN, SYM.LEATHER, SYM.MAN, SYM.BASK,
+      SYM.MAN, SYM.MAN, SYM.BAG, SYM.MAN,
+      SYM.MAN, SYM.FOXW, SYM.MAN, SYM.MAN,
+      SYM.FOXB, SYM.MAN, SYM.MAN, SYM.M3,
+      SYM.MAN, SYM.FOXG, SYM.MAN, SYM.M5
+    ]
+  ];
+
+  /* ---------------- PAYLINES (9 LINES) ---------------- */
+
+  const LINES = [
+    [[0,0],[0,1],[0,2]], // top row
+    [[1,0],[1,1],[1,2]], // middle
+    [[2,0],[2,1],[2,2]], // bottom
+    [[0,0],[1,1],[2,2]], // diag down
+    [[2,0],[1,1],[0,2]], // diag up
+    [[0,0],[1,0],[2,1]], // V left
+    [[2,0],[1,0],[0,1]], // ^ left
+    [[0,1],[1,2],[2,2]], // V right
+    [[2,1],[1,2],[0,2]]  // ^ right
+  ];
+
+  /* ---------------- DRAW / RENDER ---------------- */
+
+  function drawEmpty() {
+    const reels = document.getElementById("reels");
+    reels.innerHTML = "";
+    for (let c = 0; c < 3; c++) {
+      const col = document.createElement("div");
+      col.className = "reel";
+      for (let r = 0; r < 3; r++) {
+        const cell = document.createElement("div");
+        cell.className = "symbol";
+        col.appendChild(cell);
+      }
+      reels.appendChild(col);
     }
   }
-  return grid;
-}
 
-/* SCORING */
-function evalLine(symbols,bet){
-  const[a,b,c]=symbols;
-  const isMult = x => x===SYM.M3 || x===SYM.M5;
+  function renderGrid(grid) {
+    const cols = document.querySelectorAll(".reel");
+    for (let c = 0; c < 3; c++) {
+      for (let r = 0; r < 3; r++) {
+        const cell = cols[c].children[r];
+        cell.classList.remove("highlight");
+        const sym = grid[r][c];
+        const img = document.createElement("img");
+        img.src = IMG[sym];
+        img.alt = sym;
+        cell.innerHTML = "";
+        cell.appendChild(img);
+      }
+    }
+  }
 
-  if(a===b && b===c && isMult(a)){
-    return a===SYM.M3 ? bet*10 : bet*25;
-  }
-  if(a===b && b===c && PAY[a]){
-    return bet*PAY[a];
+  function spinReels() {
+    const grid = [
+      [null,null,null],
+      [null,null,null],
+      [null,null,null]
+    ];
+    for (let c = 0; c < 3; c++) {
+      const strip = REELS[c];
+      const len = strip.length;
+      const stop = Math.floor(Math.random() * len);
+      for (let r = 0; r < 3; r++) {
+        grid[r][c] = strip[(stop + r) % len];
+      }
+    }
+    return grid;
   }
 
-  const count={};
-  [a,b,c].forEach(s=>count[s]=(count[s]||0)+1);
-  let reg=null;
-  for(let s in count){
-    if(count[s]===2 && PAY[s]) reg=s;
+  /* ---------------- SCORING (LOW WIN LOGIC) ---------------- */
+
+  function evaluateLine(symbols, bet) {
+    const [a,b,c] = symbols;
+
+    // 3-of-a-kind regular symbol
+    if (a === b && b === c && PAY[a]) {
+      return bet * PAY[a];
+    }
+
+    // 3-of-a-kind multiplier-only line
+    if (a === b && b === c && MULT_ONLY[a]) {
+      return bet * MULT_ONLY[a];
+    }
+
+    // No mixed wins. Keeps odds low & clear.
+    return 0;
   }
-  if(reg){
-    let mult=1;
-    [a,b,c].forEach(s=>{
-      if(s===SYM.M3)mult*=3;
-      if(s===SYM.M5)mult*=5;
+
+  function highlightLine(line) {
+    const cols = document.querySelectorAll(".reel");
+    line.forEach(([r,c]) => {
+      cols[c].children[r].classList.add("highlight");
     });
-    return bet*PAY[reg]*mult;
   }
-  return 0;
-}
 
-function scoreGrid(grid,bet){
-  let win=0;
-  let msgs=[];
-  LINES.forEach((line,i)=>{
-    const symbols=line.map(p=>grid[p[0]][p[1]]);
-    const amt=evalLine(symbols,bet);
-    if(amt>0){
-      win+=amt;
-      msgs.push(`Line ${i+1}: +${amt}`);
-      highlight(line);
+  function evaluateGrid(grid, bet) {
+    let total = 0;
+    let messages = [];
+
+    LINES.forEach((line, i) => {
+      const symbols = line.map(([r,c]) => grid[r][c]);
+      const win = evaluateLine(symbols, bet);
+      if (win > 0) {
+        total += win;
+        messages.push(`Line ${i+1}: +${win}`);
+        highlightLine(line);
+      }
+    });
+
+    return { total, messages };
+  }
+
+  /* ---------------- MAIN SPIN ---------------- */
+
+  function spin() {
+    if (!requireLogin()) return;
+
+    const betEl = document.getElementById("betInput");
+    let bet = parseInt(betEl.value, 10);
+    if (isNaN(bet) || bet < 1) {
+      bet = 1;
+      betEl.value = 1;
     }
-  });
-  return{win,msgs};
-}
 
-function highlight(line){
-  const reels=document.querySelectorAll(".reel");
-  line.forEach(([r,c])=>{
-    reels[c].children[r].classList.add("highlight");
-  });
-}
+    if (bet > balance) {
+      alert("Not enough coins for that bet.");
+      return;
+    }
 
-/* SPIN BUTTON */
-function spin(){
-  if(!user){ loginPrompt(); if(!user)return; }
-  const bet=parseInt(document.getElementById("betInput").value);
-  if(bet>balance){ alert("Not enough coins."); return; }
+    balance -= bet;
+    updateBalance();
 
-  balance-=bet;
-  const grid=spinReels();
-  renderGrid(grid);
+    const grid = spinReels();
+    renderGrid(grid);
 
-  const{win,msgs}=scoreGrid(grid,bet);
-  balance+=win;
+    const { total, messages } = evaluateGrid(grid, bet);
+    balance += total;
+    updateBalance();
+    saveUser();
 
-  updateBalance();
-  saveUser();
-  document.getElementById("lastWin").textContent=win;
-  document.getElementById("message").textContent =
-    msgs.length ? msgs.join(" • ") : "No win";
-}
-
-/* REDEEM */
-const REWARDS=[
-  {name:"Sticker Pack",cost:2000},
-  {name:"T-Shirt",cost:5000},
-  {name:"Gift Card",cost:10000},
-  {name:"Exclusive Hoodie",cost:50000},
-  {name:"High-End Gadget",cost:250000},
-  {name:"Mega Prize",cost:1000000}
-];
-
-function redeemMenu(){
-  if(!user){ loginPrompt(); return; }
-
-  let menu="Redeem Reward:\n\n";
-  REWARDS.forEach((r,i)=>menu+=`${i+1}. ${r.name} — ${r.cost}\n`);
-  const choice=prompt(menu);
-  if(!choice)return;
-
-  const item=REWARDS[parseInt(choice)-1];
-  if(!item)return;
-
-  if(balance<item.cost){
-    alert("Not enough coins.");
-    return;
+    document.getElementById("lastWin").textContent = total;
+    document.getElementById("message").textContent =
+      messages.length ? messages.join(" • ") : "No win this spin.";
   }
 
-  balance-=item.cost;
-  saveUser();
-  updateBalance();
-  alert("You redeemed: "+item.name);
-}
+  /* ---------------- REDEEM + PURCHASE ---------------- */
 
-/* PURCHASE */
-function purchaseMenu(){
-  if(!user){ loginPrompt(); return; }
+  const REWARDS = [
+    { name: "Sticker Pack",   cost: 2000 },
+    { name: "T-Shirt",        cost: 5000 },
+    { name: "Gift Card",      cost: 10000 },
+    { name: "Exclusive Hoodie", cost: 50000 },
+    { name: "High-End Gadget",  cost: 250000 },
+    { name: "Mega Prize",     cost: 1000000 }
+  ];
 
-  let amt=prompt("Buy chips:\n$10 = 100 coins\nEnter amount (100, 200, 300...):");
-  if(!amt)return;
-  amt=parseInt(amt);
+  function redeemMenu() {
+    if (!requireLogin()) return;
 
-  if(isNaN(amt)||amt<100||amt%100!==0){
-    alert("Invalid amount");
-    return;
+    let menu = "Redeem Rewards:\n\n";
+    REWARDS.forEach((r,i) => {
+      menu += `${i+1}. ${r.name} — ${r.cost} coins\n`;
+    });
+
+    const choice = prompt(menu);
+    if (!choice) return;
+
+    const index = parseInt(choice, 10) - 1;
+    const reward = REWARDS[index];
+    if (!reward) return;
+
+    if (balance < reward.cost) {
+      alert("Not enough coins to redeem that reward.");
+      return;
+    }
+
+    balance -= reward.cost;
+    updateBalance();
+    saveUser();
+    alert("You redeemed: " + reward.name);
   }
 
-  const price=(amt/100)*10;
-  if(!confirm(`Buy ${amt} coins for $${price}?`))return;
+  function purchaseMenu() {
+    if (!requireLogin()) return;
 
-  balance+=amt;
-  saveUser();
-  updateBalance();
-  alert("Purchase successful (demo mode).");
-}
+    let amt = prompt("$10 = 100 coins.\n\nEnter how many coins you want to buy (100, 200, 300...):");
+    if (!amt) return;
+    amt = parseInt(amt, 10);
 
-/* INIT */
-window.onload=()=>{
-  drawEmpty();
-  updateUserDisplay();
-  updateBalance();
-};
+    if (isNaN(amt) || amt < 100 || amt % 100 !== 0) {
+      alert("Amount must be 100 or higher, in steps of 100.");
+      return;
+    }
+
+    const price = (amt / 100) * 10;
+    const ok = confirm(`Confirm purchase of ${amt} coins for $${price}? (demo only, no real charge)`);
+    if (!ok) return;
+
+    balance += amt;
+    updateBalance();
+    saveUser();
+    alert("Coins added (demo mode).");
+  }
+
+  /* ---------------- INIT ---------------- */
+
+  window.onload = function() {
+    drawEmpty();
+    updateUserDisplay();
+    updateBalance();
+  };
 </script>
-
 </head>
 <body>
+  <div class="slot-wrapper">
+    <h1>Fresh Fox Slots</h1>
+    <div id="userDisplay">Not logged in</div>
 
-<div class="slot-wrapper">
+    <!-- Email login form -->
+    <div class="login-bar">
+      <form onsubmit="loginFromForm(event)">
+        <input id="loginEmail" type="email" placeholder="Email" />
+        <input id="loginPass" type="password" placeholder="Password" />
+        <button type="submit">Log In</button>
+      </form>
+    </div>
 
-<h1>Fresh Fox Slots</h1>
-<div id="userDisplay">Not logged in</div>
+    <div class="info-row">
+      Balance: <span id="balanceDisplay">0</span> coins • Last win: <span id="lastWin">0</span>
+    </div>
 
-<div style="text-align:center;">
-  Balance: <span id="balanceDisplay">0</span>  
-  • Last Win: <span id="lastWin">0</span>
-</div>
+    <div class="reels" id="reels"></div>
 
-<div class="reels" id="reels"></div>
+    <div class="controls">
+      <input id="betInput" type="number" value="10" min="1" />
+      <button onclick="spin()">Spin</button>
+      <button onclick="redeemMenu()">Redeem Rewards</button>
+      <button onclick="purchaseMenu()">Buy Chips</button>
+      <button onclick="window.location.href='index.html'">Back to Home</button>
+    </div>
 
-<div class="controls">
-  <input id="betInput" type="number" value="10" min="1">
-  <button onclick="spin()">SPIN</button>
-  <button onclick="redeemMenu()">Redeem</button>
-  <button onclick="purchaseMenu()">Buy Chips</button>
-  <button onclick="loginPrompt()">Login</button>
-  <button onclick="window.location.href='index.html'">Home</button>
-</div>
-
-<p id="message" style="text-align:center; margin-top:10px;"></p>
-
-</div>
-
+    <div id="message"></div>
+  </div>
 </body>
 </html>
